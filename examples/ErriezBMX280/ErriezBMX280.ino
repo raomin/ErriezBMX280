@@ -39,22 +39,8 @@
 // Adjust sea level for altitude calculation
 #define SEA_LEVEL_PRESSURE_HPA      1026.25
 
-// Create BMX280 object I2C address 0x76 or 0x77 using the default Wire object
-ErriezBMX280 bmx280_default = ErriezBMX280(0x76);
-
-// Example for using a different I2C bus (e.g., Wire1 on ESP32 or Due)
-// Uncomment the following lines if your board supports Wire1
-/*
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_SAM_DUE)
-  // Make sure to initialize Wire1 in setup() if using it
-  // Wire1.begin(); 
-  // Wire1.setClock(400000);
-  ErriezBMX280 bmx280_wire1 = ErriezBMX280(0x76, &Wire1);
-#endif
-*/
-
-// Use this variable to interact with the sensor (change if using Wire1)
-ErriezBMX280 &bmx280 = bmx280_default;
+// Create BMX280 object I2C address 0x76 or 0x77
+ErriezBMX280 bmx280 = ErriezBMX280(0x76);
 
 
 void setup()
@@ -67,28 +53,15 @@ void setup()
     }
     Serial.println(F("\nErriez BMP280/BMX280 example"));
 
-    // Initialize the default I2C bus
+    // Initialize I2C bus
     Wire.begin();
     Wire.setClock(400000);
 
-    // If using Wire1, initialize it here (example):
-    /*
-#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_SAM_DUE)
-    // Check if you intend to use the Wire1 instance
-    // if (&bmx280 == &bmx280_wire1) { 
-    //    Wire1.begin(); // Add SDA/SCL pins for ESP32 if needed
-    //    Wire1.setClock(400000);
-    // }
-#endif
-    */
-
     // Initialize sensor
-    Serial.print(F("Initializing sensor... "));
     while (!bmx280.begin()) {
         Serial.println(F("Error: Could not detect sensor"));
         delay(3000);
     }
-    Serial.println(F("Done."));
 
     // Print sensor type
     Serial.print(F("\nSensor type: "));
