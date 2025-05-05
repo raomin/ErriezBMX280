@@ -76,7 +76,15 @@ Examples | Erriez BMP280/BME280 sensor:
 #define SEA_LEVEL_PRESSURE_HPA      1026.25
 
 // Create BMX280 object I2C address 0x76 or 0x77
+// This uses the default Wire object
 ErriezBMX280 bmx280 = ErriezBMX280(0x76);
+
+// To use a different I2C bus (e.g., Wire1 on ESP32 or Due):
+// 1. Make sure your board supports Wire1.
+// 2. Include Wire1 if necessary (usually included with Wire.h).
+// 3. Initialize Wire1 in setup(): Wire1.begin(); Wire1.setClock(400000);
+// 4. Create the object passing the Wire1 instance:
+// ErriezBMX280 bmx280_on_wire1 = ErriezBMX280(0x76, &Wire1);
 
 
 void setup()
@@ -89,11 +97,15 @@ void setup()
     }
     Serial.println(F("\nErriez BMP280/BMX280 example"));
 
-    // Initialize I2C bus
+    // Initialize the default I2C bus
     Wire.begin();
     Wire.setClock(400000);
 
-    // Initialize sensor
+    // If using Wire1, initialize it here:
+    // Wire1.begin(); // Add SDA/SCL pins for ESP32 if needed
+    // Wire1.setClock(400000);
+
+    // Initialize sensor (use the correct object, e.g., bmx280 or bmx280_on_wire1)
     while (!bmx280.begin()) {
         Serial.println(F("Error: Could not detect sensor"));
         delay(3000);
@@ -116,27 +128,23 @@ void setup()
 
 void loop()
 {
-    Serial.print(F("Temperature: "));
-    Serial.print(bmx280.readTemperature());
-    Serial.println(" C");
+    // Read sensor data using the correct object (e.g., bmx280 or bmx280_on_wire1)
+    float temperature = bmx280.readTemperature();
+    float pressure = bmx280.readPressure();
+    float altitude = bmx280.readAltitude(SEA_LEVEL_PRESSURE_HPA);
 
+    Serial.print(F("Temperature: ")); Serial.print(temperature); Serial.println(F(" *C"));
+    Serial.print(F("Pressure:    ")); Serial.print(pressure / 100.0); Serial.println(F(" hPa"));
+    Serial.print(F("Altitude:    ")); Serial.print(altitude); Serial.println(F(" m"));
+
+    // Read humidity if it's a BME280
     if (bmx280.getChipID() == CHIP_ID_BME280) {
-        Serial.print(F("Humidity:    "));
-        Serial.print(bmx280.readHumidity());
-        Serial.println(" %");
+        float humidity = bmx280.readHumidity();
+        Serial.print(F("Humidity:    ")); Serial.print(humidity); Serial.println(F(" %RH"));
     }
 
-    Serial.print(F("Pressure:    "));
-    Serial.print(bmx280.readPressure() / 100.0F);
-    Serial.println(" hPa");
-
-    Serial.print(F("Altitude:    "));
-    Serial.print(bmx280.readAltitude(SEA_LEVEL_PRESSURE_HPA));
-    Serial.println(" m");
-
     Serial.println();
-
-    delay(1000);
+    delay(2000);
 }
 ```
 **Output**

@@ -136,6 +136,7 @@ class ErriezBMX280
 public:
     // Constructor
     ErriezBMX280(uint8_t i2cAddr);
+    ErriezBMX280(uint8_t i2cAddr, TwoWire *theWire);
 
     // Initialization
     bool begin();
@@ -167,6 +168,7 @@ public:
 
 private:
     uint8_t _i2cAddr;   //!< I2C address
+    TwoWire* _wire;     //!< Pointer to I2C interface
     uint8_t _chipID;    //!< Chip iD
     int32_t _t_fine;    //!< Temperature variable
 
