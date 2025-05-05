@@ -36,11 +36,23 @@
 #include "ErriezBMX280.h"
 
 /*!
- * \brief Constructor
+ * \brief Constructor using default Wire object
  * \param i2cAddr
  *      I2C address
  */
-ErriezBMX280::ErriezBMX280(uint8_t i2cAddr) : _i2cAddr(i2cAddr), _t_fine(0)
+ErriezBMX280::ErriezBMX280(uint8_t i2cAddr) : _i2cAddr(i2cAddr), _wire(&Wire), _t_fine(0)
+{
+
+}
+
+/*!
+ * \brief Constructor using custom TwoWire object
+ * \param i2cAddr
+ *      I2C address
+ * \param theWire
+ *      Pointer to TwoWire interface (e.g. &Wire or &Wire1)
+ */
+ErriezBMX280::ErriezBMX280(uint8_t i2cAddr, TwoWire *theWire) : _i2cAddr(i2cAddr), _wire(theWire), _t_fine(0)
 {
 
 }
@@ -295,13 +307,13 @@ void ErriezBMX280::setSampling(BMX280_Mode_e mode,
  */
 uint8_t ErriezBMX280::read8(uint8_t reg)
 {
-    Wire.beginTransmission(_i2cAddr);
-    Wire.write(reg);
-    if (Wire.endTransmission() != 0) {
+    _wire->beginTransmission(_i2cAddr);
+    _wire->write(reg);
+    if (_wire->endTransmission() != 0) {
         return 0;
     }
-    Wire.requestFrom(_i2cAddr, (byte)1);
-    return Wire.read();
+    _wire->requestFrom(_i2cAddr, (byte)1);
+    return _wire->read();
 }
 
 /*!
@@ -313,10 +325,10 @@ uint8_t ErriezBMX280::read8(uint8_t reg)
  */
 void ErriezBMX280::write8(uint8_t reg, uint8_t value)
 {
-    Wire.beginTransmission(_i2cAddr);
-    Wire.write(reg);
-    Wire.write(value);
-    Wire.endTransmission();
+    _wire->beginTransmission(_i2cAddr);
+    _wire->write(reg);
+    _wire->write(value);
+    _wire->endTransmission();
 }
 
 /*!
@@ -356,13 +368,13 @@ int16_t ErriezBMX280::readS16_LE(uint8_t reg)
  */
 uint16_t ErriezBMX280::read16(uint8_t reg)
 {
-    Wire.beginTransmission(_i2cAddr);
-    Wire.write(reg);
-    if (Wire.endTransmission() != 0) {
+    _wire->beginTransmission(_i2cAddr);
+    _wire->write(reg);
+    if (_wire->endTransmission() != 0) {
         return 0;
     }
-    Wire.requestFrom(_i2cAddr, (byte)2);
-    return (Wire.read() << 8) | Wire.read();
+    _wire->requestFrom(_i2cAddr, (byte)2);
+    return (_wire->read() << 8) | _wire->read();
 }
 
 /*!
@@ -376,16 +388,16 @@ uint32_t ErriezBMX280::read24(uint8_t reg)
 {
     uint32_t value;
 
-    Wire.beginTransmission(_i2cAddr);
-    Wire.write(reg);
-    Wire.endTransmission();
-    Wire.requestFrom(_i2cAddr, (byte)3);
+    _wire->beginTransmission(_i2cAddr);
+    _wire->write(reg);
+    _wire->endTransmission();
+    _wire->requestFrom(_i2cAddr, (byte)3);
 
-    value = Wire.read();
+    value = _wire->read();
     value <<= 8;
-    value |= Wire.read();
+    value |= _wire->read();
     value <<= 8;
-    value |= Wire.read();
+    value |= _wire->read();
 
     return value;
 }
