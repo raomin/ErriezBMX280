@@ -37,7 +37,7 @@
 #define ERRIEZ_BME280_H_
 
 #include <Arduino.h>
-// #include <Wire.h> // Will be included by the specific wire type typically
+#include <Wire.h>
 
 // I2C address
 #define BMX280_I2C_ADDR             0x76    //!< I2C address
@@ -128,15 +128,15 @@ typedef enum {
     BMX280_STANDBY_MS_1000 = 0b101          //!< 1s standby
 } BMX280_Standby_e;
 
-template<typename T_WIRE> // Added template
-class ErriezBMX280_T // Renamed class
+/*!
+ * \brief BMX280 class
+ */
+class ErriezBMX280
 {
 public:
     // Constructor
-    ErriezBMX280_T(uint8_t i2cAddr); // Remains, assumes Wire is default (T_WIRE must be TwoWire compatible)
-    ErriezBMX280_T(uint8_t i2cAddr, T_WIRE *theWire); // Changed TwoWire* to T_WIRE*
-    ErriezBMX280_T();                                // Auto-detects I2C addr, uses default Wire (T_WIRE must be TwoWire compatible)
-    ErriezBMX280_T(T_WIRE *theWire);                 // Auto-detects I2C addr, uses specified T_WIRE object
+    ErriezBMX280(uint8_t i2cAddr);
+    ErriezBMX280(uint8_t i2cAddr, TwoWire *theWire);
 
     // Initialization
     bool begin();
@@ -168,7 +168,7 @@ public:
 
 private:
     uint8_t _i2cAddr;   //!< I2C address
-    T_WIRE* _wire;     //!< Pointer to I2C interface, changed to T_WIRE*
+    TwoWire* _wire;     //!< Pointer to I2C interface
     uint8_t _chipID;    //!< Chip iD
     int32_t _t_fine;    //!< Temperature variable
 
@@ -196,8 +196,5 @@ private:
     // Read coefficient registers
     void readCoefficients(void);
 };
-
-// For backward compatibility with code expecting non-templated version with TwoWire
-using ErriezBMX280 = ErriezBMX280_T<TwoWire>;
 
 #endif // ERRIEZ_BMX280_H_
