@@ -40,21 +40,68 @@
  * \param i2cAddr
  *      I2C address
  */
-ErriezBMX280::ErriezBMX280(uint8_t i2cAddr) : _i2cAddr(i2cAddr), _wire(&Wire), _t_fine(0)
+template<typename T_WIRE> // Added template
+ErriezBMX280_T<T_WIRE>::ErriezBMX280_T(uint8_t i2cAddr) : _i2cAddr(i2cAddr), _wire(&Wire), _t_fine(0)
 {
 
 }
 
 /*!
- * \brief Constructor using custom TwoWire object
+ * \brief Constructor using custom T_WIRE object
  * \param i2cAddr
  *      I2C address
  * \param theWire
- *      Pointer to TwoWire interface (e.g. &Wire or &Wire1)
+ *      Pointer to T_WIRE interface (e.g. &Wire or &Wire1 or &SoftWire)
  */
-ErriezBMX280::ErriezBMX280(uint8_t i2cAddr, TwoWire *theWire) : _i2cAddr(i2cAddr), _wire(theWire), _t_fine(0)
+template<typename T_WIRE> // Added template
+ErriezBMX280_T<T_WIRE>::ErriezBMX280_T(uint8_t i2cAddr, T_WIRE *theWire) : _i2cAddr(i2cAddr), _wire(theWire), _t_fine(0)
 {
 
+}
+
+/*!
+ * \brief Constructor using default Wire object and auto-detecting I2C address.
+ *        This constructor is intended for use when T_WIRE is compatible with the global Wire object (typically TwoWire).
+ */
+template<typename T_WIRE>
+ErriezBMX280_T<T_WIRE>::ErriezBMX280_T() : _wire(&Wire), _t_fine(0)
+{
+    // Auto-detect I2C address
+    // Note: _wire is initialized to &Wire. This assumes T_WIRE is compatible (e.g., TwoWire).
+    _wire->beginTransmission(BMX280_I2C_ADDR); // Default address 0x76
+    if (_wire->endTransmission() == 0) {
+        _i2cAddr = BMX280_I2C_ADDR;
+    } else {
+        _wire->beginTransmission(BMX280_I2C_ADDR_ALT); // Alternative address 0x77
+        if (_wire->endTransmission() == 0) {
+            _i2cAddr = BMX280_I2C_ADDR_ALT;
+        } else {
+            // Fallback to default primary address if neither is found.
+            // The begin() method will ultimately determine if a sensor is truly present.
+            _i2cAddr = BMX280_I2C_ADDR;
+        }
+    }
+}
+
+/*!
+ * \brief Constructor using custom T_WIRE object and auto-detecting I2C address.
+ * \param theWire Pointer to T_WIRE interface (e.g. &Wire, &Wire1, or &SoftWire)
+ */
+template<typename T_WIRE>
+ErriezBMX280_T<T_WIRE>::ErriezBMX280_T(T_WIRE *theWire) : _wire(theWire), _t_fine(0)
+{
+    // Auto-detect I2C address
+    _wire->beginTransmission(BMX280_I2C_ADDR); // Default address 0x76
+    if (_wire->endTransmission() == 0) {
+        _i2cAddr = BMX280_I2C_ADDR;
+    } else {
+        _wire->beginTransmission(BMX280_I2C_ADDR_ALT); // Alternative address 0x77
+        if (_wire->endTransmission() == 0) {
+            _i2cAddr = BMX280_I2C_ADDR_ALT;
+        } else {
+            _i2cAddr = BMX280_I2C_ADDR; // Fallback to default primary address
+        }
+    }
 }
 
 /*!
@@ -64,7 +111,8 @@ ErriezBMX280::ErriezBMX280(uint8_t i2cAddr, TwoWire *theWire) : _i2cAddr(i2cAddr
  * \retval false
  *      Error: No (supported) sensor detected
  */
-bool ErriezBMX280::begin()
+template<typename T_WIRE> // Added template
+bool ErriezBMX280_T<T_WIRE>::begin()
 {
     // Read chip ID
     _chipID = read8(BME280_REG_CHIPID);
@@ -102,7 +150,8 @@ bool ErriezBMX280::begin()
  * \return
  *      Chip ID as read with begin()
  */
-uint8_t ErriezBMX280::getChipID()
+template<typename T_WIRE> // Added template
+uint8_t ErriezBMX280_T<T_WIRE>::getChipID()
 {
     // Return chip ID
     return _chipID;
@@ -113,7 +162,8 @@ uint8_t ErriezBMX280::getChipID()
  * \return
  *      Temperature (float)
  */
-float ErriezBMX280::readTemperature()
+template<typename T_WIRE> // Added template
+float ErriezBMX280_T<T_WIRE>::readTemperature()
 {
     int32_t var1, var2, adc_T;
     float temperature;
@@ -141,7 +191,8 @@ float ErriezBMX280::readTemperature()
  * \return
  *      Pressure (float)
  */
-float ErriezBMX280::readPressure()
+template<typename T_WIRE> // Added template
+float ErriezBMX280_T<T_WIRE>::readPressure()
 {
     int64_t var1;
     int64_t var2;
@@ -183,7 +234,8 @@ float ErriezBMX280::readPressure()
  * \return
  *      Altitude (float)
  */
-float ErriezBMX280::readAltitude(float seaLevel)
+template<typename T_WIRE> // Added template
+float ErriezBMX280_T<T_WIRE>::readAltitude(float seaLevel)
 {
     float atmospheric = readPressure() / 100.0F;
 
@@ -196,7 +248,8 @@ float ErriezBMX280::readAltitude(float seaLevel)
  * \return
  *      Humidity (float)
  */
-float ErriezBMX280::readHumidity()
+template<typename T_WIRE> // Added template
+float ErriezBMX280_T<T_WIRE>::readHumidity()
 {
     int32_t v_x1_u32r;
     int32_t adc_H;
@@ -237,7 +290,8 @@ float ErriezBMX280::readHumidity()
 /*!
  * \brief Read coefficient registers at startup
  */
-void ErriezBMX280::readCoefficients(void)
+template<typename T_WIRE> // Added template
+void ErriezBMX280_T<T_WIRE>::readCoefficients(void)
 {
     _dig_T1 = read16_LE(BMX280_REG_DIG_T1);
     _dig_T2 = readS16_LE(BMX280_REG_DIG_T2);
@@ -278,7 +332,8 @@ void ErriezBMX280::readCoefficients(void)
  * \param standbyDuration
  *      See BMX280_Standby_e
  */
-void ErriezBMX280::setSampling(BMX280_Mode_e mode,
+template<typename T_WIRE> // Added template
+void ErriezBMX280_T<T_WIRE>::setSampling(BMX280_Mode_e mode,
                                BMX280_Sampling_e tempSampling,
                                BMX280_Sampling_e pressSampling,
                                BMX280_Sampling_e humSampling,
@@ -305,7 +360,8 @@ void ErriezBMX280::setSampling(BMX280_Mode_e mode,
  * \return
  *      8-bit register value
  */
-uint8_t ErriezBMX280::read8(uint8_t reg)
+template<typename T_WIRE> // Added template
+uint8_t ErriezBMX280_T<T_WIRE>::read8(uint8_t reg)
 {
     _wire->beginTransmission(_i2cAddr);
     _wire->write(reg);
@@ -323,7 +379,8 @@ uint8_t ErriezBMX280::read8(uint8_t reg)
  * \param value
  *      8-bit register value
  */
-void ErriezBMX280::write8(uint8_t reg, uint8_t value)
+template<typename T_WIRE> // Added template
+void ErriezBMX280_T<T_WIRE>::write8(uint8_t reg, uint8_t value)
 {
     _wire->beginTransmission(_i2cAddr);
     _wire->write(reg);
@@ -338,7 +395,8 @@ void ErriezBMX280::write8(uint8_t reg, uint8_t value)
  * \return
  *      16-bit unsigned register value in little endian
  */
-uint16_t ErriezBMX280::read16_LE(uint8_t reg)
+template<typename T_WIRE> // Added template
+uint16_t ErriezBMX280_T<T_WIRE>::read16_LE(uint8_t reg)
 {
     uint16_t value;
 
@@ -354,7 +412,8 @@ uint16_t ErriezBMX280::read16_LE(uint8_t reg)
  * \return
  *      16-bit signed register value in little endian
  */
-int16_t ErriezBMX280::readS16_LE(uint8_t reg)
+template<typename T_WIRE> // Added template
+int16_t ErriezBMX280_T<T_WIRE>::readS16_LE(uint8_t reg)
 {
     return (int16_t)read16_LE(reg);
 }
@@ -366,7 +425,8 @@ int16_t ErriezBMX280::readS16_LE(uint8_t reg)
  * \return
  *      16-bit register value
  */
-uint16_t ErriezBMX280::read16(uint8_t reg)
+template<typename T_WIRE> // Added template
+uint16_t ErriezBMX280_T<T_WIRE>::read16(uint8_t reg)
 {
     _wire->beginTransmission(_i2cAddr);
     _wire->write(reg);
@@ -384,7 +444,8 @@ uint16_t ErriezBMX280::read16(uint8_t reg)
  * \return
  *      24-bit register value
  */
-uint32_t ErriezBMX280::read24(uint8_t reg)
+template<typename T_WIRE> // Added template
+uint32_t ErriezBMX280_T<T_WIRE>::read24(uint8_t reg)
 {
     uint32_t value;
 
