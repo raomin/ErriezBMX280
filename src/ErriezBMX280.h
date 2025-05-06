@@ -37,7 +37,7 @@
 #define ERRIEZ_BME280_H_
 
 #include <Arduino.h>
-#include <Wire.h> // Re-added for TwoWire and global Wire access
+// #include <Wire.h> // Will be included by the specific wire type typically
 
 // I2C address
 #define BMX280_I2C_ADDR             0x76    //!< I2C address
